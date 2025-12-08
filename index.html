@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lojinha do Elias - Pinturas Personalizadas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --azul-vibrante: #0066ff;
+            --azul-energetico: #0099ff;
+            --azul-turquesa: #00ccff;
+            --azul-claro: #66ccff;
+            --azul-brilhante: #3399ff;
+            --azul-piscina: #00ffff;
+            --amarelo-contraste: #ffcc00;
+            --branco: #ffffff;
+            --cinza-claro: #f0f8ff;
+            --cinza: #666;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--cinza-claro);
+            color: #333;
+        }
+
+        /* Header e Navegação */
+        header {
+            background: linear-gradient(135deg, var(--azul-vibrante), var(--azul-turquesa));
+            color: white;
+            padding: 1.2rem 2rem;
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 2.2rem;
+            color: var(--amarelo-contraste);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: var(--amarelo-contraste);
+            font-weight: 600;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1.8rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-icon {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Seções */
+        .section-title {
+            font-size: 1.8rem;
+            color: var(--azul-vibrante);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--azul-turquesa);
+            display: inline-block;
+        }
+
+        .section-subtitle {
+            color: var(--azul-energetico);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        /* Produtos */
+        .produtos-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .produto-card {
+            background-color: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.1);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            border: 2px solid transparent;
+        }
+
+        .produto-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 102, 255, 0.2);
+            border-color: var(--azul-claro);
+        }
+
+        /* Galeria de fotos do produto */
+        .produto-galeria {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+        }
+
+        .produto-img-principal {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-bottom: 3px solid var(--azul-claro);
+            transition: transform 0.5s ease;
+        }
+
+        .produto-img-principal:hover {
+            transform: scale(1.05);
+        }
+
+        .produto-miniaturas {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            padding: 0 10px;
+        }
+
+        .produto-miniatura {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .produto-miniatura:hover, .produto-miniatura.ativa {
+            border-color: var(--amarelo-contraste);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .produto-miniatura img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .contador-fotos {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .produto-info {
+            padding: 1.2rem;
+        }
+
+        .produto-titulo {
+            font-size: 1.2rem;
+            color: var(--azul-vibrante);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .produto-desc {
+            color: var(--cinza);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .produto-preco {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--azul-energetico);
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .produto-preco::before {
+            content: "R$";
+            font-size: 1rem;
+            color: var(--azul-turquesa);
+        }
+
+        .btn-comprar {
+            display: block;
+            width: 100%;
+            background: linear-gradient(to right, var(--azul-vibrante), var(--azul-turquesa));
+            color: white;
+            border: none;
+            padding: 0.9rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-comprar:hover {
+            background: linear-gradient(to right, var(--azul-energetico), var(--azul-piscina));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 102, 255, 0.4);
+        }
+
+        .btn-whatsapp {
+            background: linear-gradient(to right, #25D366, #1ebe5c);
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+        }
+
+        .btn-whatsapp:hover {
+            background: linear-gradient(to right, #1ebe5c, #1a9c4a);
+            box-shadow: 0 6px 15px rgba(37, 211, 102, 0.4);
+        }
+
+        /* Formulário de pintura personalizada */
+        .personalizada-container {
+            background: linear-gradient(135deg, white, var(--cinza-claro));
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.1);
+            margin-bottom: 3rem;
+            border: 2px solid var(--azul-claro);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: var(--azul-vibrante);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.9rem;
+            border: 2px solid var(--azul-claro);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--azul-turquesa);
+            box-shadow: 0 0 0 3px rgba(0, 204, 255, 0.2);
+        }
+
+        .btn-enviar {
+            background: linear-gradient(to right, var(--azul-vibrante), var(--azul-turquesa));
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-enviar:hover {
+            background: linear-gradient(to right, var(--azul-energetico), var(--azul-piscina));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 102, 255, 0.4);
+        }
+
+        /* Biblioteca de fotos */
+        .biblioteca-container {
+            background: linear-gradient(135deg, white, var(--cinza-claro));
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.1);
+            margin-bottom: 3rem;
+            border: 2px solid var(--azul-claro);
+        }
+
+        .galeria {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .foto-item {
+            height: 180px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 6px 12px rgba(0, 102, 255, 0.15);
+            transition: transform 0.4s ease;
+            position: relative;
+        }
+
+        .foto-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .foto-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 102, 255, 0.25);
+        }
+
+        .foto-item:hover img {
+            transform: scale(1.1);
+        }
+
+        /* Área administrativa */
+        .admin-container {
+            background: linear-gradient(135deg, white, var(--cinza-claro));
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 102, 255, 0.1);
+            margin-bottom: 3rem;
+            border: 2px solid var(--azul-claro);
+            display: none; /* Inicialmente oculto */
+        }
+
+        .admin-login {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .admin-login h3 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--azul-vibrante);
+        }
+
+        .admin-area {
+            display: none; /* Será mostrada após login */
+        }
+
+        .admin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--azul-claro);
+        }
+
+        .admin-btn {
+            background: linear-gradient(to right, var(--azul-vibrante), var(--azul-turquesa));
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 102, 255, 0.2);
+        }
+
+        .admin-btn:hover {
+            background: linear-gradient(to right, var(--azul-energetico), var(--azul-piscina));
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 102, 255, 0.3);
+        }
+
+        .btn-excluir {
+            background: linear-gradient(to right, #ff3333, #ff6666);
+            box-shadow: 0 4px 8px rgba(255, 51, 51, 0.2);
+        }
+
+        .btn-excluir:hover {
+            background: linear-gradient(to right, #ff6666, #ff9999);
+            box-shadow: 0 6px 12px rgba(255, 51, 51, 0.3);
+        }
+
+        .admin-form {
+            background-color: rgba(102, 204, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+            border: 2px solid var(--azul-claro);
+        }
+
+        /* Upload de múltiplas fotos */
+        .upload-fotos {
+            margin-top: 1rem;
+        }
+
+        .fotos-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        .foto-preview-item {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid var(--azul-claro);
+        }
+
+        .foto-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remover-foto {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background-color: rgba(255, 51, 51, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-add-fotos {
+            background-color: var(--azul-claro);
+            color: var(--azul-vibrante);
+            border: 2px dashed var(--azul-turquesa);
+            padding: 0.8rem;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 5px;
+        }
+
+        .btn-add-fotos:hover {
+            background-color: var(--azul-turquesa);
+            color: white;
+        }
+
+        /* Lista de produtos na área admin */
+        .produtos-lista-admin {
+            margin-top: 2rem;
+        }
+
+        .produto-admin-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 102, 255, 0.1);
+            border-left: 5px solid var(--azul-turquesa);
+        }
+
+        .produto-admin-info {
+            flex-grow: 1;
+        }
+
+        .produto-admin-titulo {
+            font-weight: 700;
+            color: var(--azul-vibrante);
+            margin-bottom: 0.3rem;
+        }
+
+        .produto-admin-preco {
+            color: var(--azul-energetico);
+            font-weight: 700;
+        }
+
+        .produto-admin-fotos {
+            font-size: 0.9rem;
+            color: var(--cinza);
+            margin-top: 0.3rem;
+        }
+
+        .produto-admin-acoes {
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        /* Lista de fotos na área admin */
+        .fotos-lista-admin {
+            margin-top: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .foto-admin-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 102, 255, 0.1);
+        }
+
+        .foto-admin-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .foto-admin-excluir {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(255, 51, 51, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Status do Firebase */
+        .firebase-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .status-online {
+            background-color: rgba(37, 211, 102, 0.2);
+            color: #1a9c4a;
+            border: 1px solid rgba(37, 211, 102, 0.3);
+        }
+
+        .status-offline {
+            background-color: rgba(255, 51, 51, 0.2);
+            color: #cc0000;
+            border: 1px solid rgba(255, 51, 51, 0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, var(--azul-vibrante), var(--azul-turquesa));
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+        }
+
+        .creditos {
+            font-size: 0.9rem;
+            color: var(--amarelo-contraste);
+            margin-top: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.8rem;
+            }
+
+            .nav-icon {
+                display: block;
+            }
+
+            .nav-menu {
+                display: none;
+                width: 100%;
+            }
+
+            .nav-menu.active {
+                display: block;
+            }
+
+            .produtos-container {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+
+            .galeria {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .admin-actions {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .produtos-container {
+                grid-template-columns: 1fr;
+            }
+
+            .galeria {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-palette"></i>
+                <h1>Lojinha do <span>Elias</span></h1>
+            </div>
+            <div class="nav-icon" id="navIcon">
+                <i class="fas fa-bars"></i>
+            </div>
+            <nav class="nav-menu" id="navMenu">
+                <ul>
+                    <li><a href="#produtos"><i class="fas fa-store"></i> Produtos</a></li>
+                    <li><a href="#personalizada"><i class="fas fa-brush"></i> Pintura Personalizada</a></li>
+                    <li><a href="#biblioteca"><i class="fas fa-images"></i> Biblioteca de Fotos</a></li>
+                    <li><a href="#admin"><i class="fas fa-user-cog"></i> Área Administrativa</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Seção de Produtos -->
+        <section id="produtos">
+            <h2 class="section-title">Nossas Pinturas</h2>
+            <div class="produtos-container" id="produtosLista">
+                <!-- Produtos serão carregados via Firebase -->
+            </div>
+        </section>
+
+        <!-- Seção de Pintura Personalizada -->
+        <section id="personalizada">
+            <h2 class="section-title">Pintura Personalizada</h2>
+            <div class="personalizada-container">
+                <p style="margin-bottom: 1.5rem; color: var(--cinza);">Descreva a pintura que você deseja, envie uma foto de referência e entraremos em contato pelo WhatsApp para discutir os detalhes e o orçamento.</p>
+                <form id="formPersonalizada">
+                    <div class="form-group">
+                        <label for="nome">Seu Nome</label>
+                        <input type="text" id="nome" name="nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao">Descrição da Pintura Desejada</label>
+                        <textarea id="descricao" name="descricao" placeholder="Descreva o estilo, cores, tema, tamanho e qualquer outro detalhe importante..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="foto">Foto de Referência (opcional)</label>
+                        <input type="file" id="foto" name="foto" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn-enviar">
+                        <i class="fab fa-whatsapp"></i> Enviar para o WhatsApp
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Biblioteca de Fotos -->
+        <section id="biblioteca">
+            <h2 class="section-title">Biblioteca de Fotos</h2>
+            <div class="biblioteca-container">
+                <p style="margin-bottom: 1.5rem; color: var(--cinza);">Galeria com exemplos de trabalhos realizados.</p>
+                <div class="galeria" id="galeriaFotos">
+                    <!-- Fotos serão carregadas via Firebase -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Área Administrativa -->
+        <section id="admin">
+            <h2 class="section-title">Área Administrativa</h2>
+            <div class="admin-container" id="adminContainer">
+                <div class="admin-login" id="adminLogin">
+                    <h3>Login Administrativo</h3>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="usuario">Usuário</label>
+                            <input type="text" id="usuario" name="usuario" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="senha">Senha</label>
+                            <input type="password" id="senha" name="senha" required>
+                        </div>
+                        <button type="submit" class="btn-enviar">Entrar</button>
+                    </form>
+                </div>
+
+                <div class="admin-area" id="adminArea">
+                    <h3 style="color: var(--azul-vibrante); margin-bottom: 1.5rem;">Gerenciamento do Site</h3>
+                    
+                    <!-- Status do Firebase -->
+                    <div id="firebaseStatus" class="firebase-status status-online">
+                        <i class="fas fa-sync fa-spin"></i>
+                        <span>Conectado ao Firebase</span>
+                    </div>
+                    
+                    <div class="admin-actions">
+                        <button class="admin-btn" id="btnAdicionarProduto">
+                            <i class="fas fa-plus"></i> Adicionar Produto
+                        </button>
+                        <button class="admin-btn" id="btnAdicionarFoto">
+                            <i class="fas fa-image"></i> Adicionar Foto na Biblioteca
+                        </button>
+                        <button class="admin-btn" id="btnGerenciarProdutos">
+                            <i class="fas fa-list"></i> Gerenciar Produtos
+                        </button>
+                        <button class="admin-btn" id="btnGerenciarFotos">
+                            <i class="fas fa-photo-video"></i> Gerenciar Fotos
+                        </button>
+                        <button class="admin-btn" id="btnSairAdmin">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </button>
+                    </div>
+
+                    <!-- Formulário para adicionar produto -->
+                    <div class="admin-form" id="formAdicionarProduto" style="display: none;">
+                        <h4 style="margin-bottom: 1rem; color: var(--azul-vibrante);">Adicionar Novo Produto</h4>
+                        <form id="formProduto">
+                            <div class="form-group">
+                                <label for="produtoTitulo">Título do Produto</label>
+                                <input type="text" id="produtoTitulo" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="produtoDescricao">Descrição</label>
+                                <textarea id="produtoDescricao" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="produtoPreco">Preço (R$)</label>
+                                <input type="number" id="produtoPreco" step="0.01" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Fotos do Produto (adicione várias fotos)</label>
+                                <div class="upload-fotos">
+                                    <div class="fotos-preview" id="fotosPreview">
+                                        <!-- Pré-visualização das fotos será exibida aqui -->
+                                    </div>
+                                    <div class="btn-add-fotos" id="btnAdicionarFotos">
+                                        <i class="fas fa-plus-circle"></i> Adicionar Fotos
+                                    </div>
+                                    <input type="file" id="fotosProduto" accept="image/*" multiple style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn-enviar">Salvar Produto</button>
+                        </form>
+                    </div>
+
+                    <!-- Formulário para adicionar foto na biblioteca -->
+                    <div class="admin-form" id="formAdicionarFoto" style="display: none;">
+                        <h4 style="margin-bottom: 1rem; color: var(--azul-vibrante);">Adicionar Foto na Biblioteca</h4>
+                        <form id="formFotoBiblioteca">
+                            <div class="form-group">
+                                <label for="fotoBiblioteca">Selecione a Foto</label>
+                                <input type="file" id="fotoBiblioteca" accept="image/*" required>
+                            </div>
+                            <button type="submit" class="btn-enviar">Adicionar à Biblioteca</button>
+                        </form>
+                    </div>
+
+                    <!-- Lista de produtos para gerenciamento -->
+                    <div class="produtos-lista-admin" id="listaProdutosAdmin" style="display: none;">
+                        <h4 class="section-subtitle">Produtos Cadastrados</h4>
+                        <div id="listaProdutosContainer">
+                            <!-- Produtos serão carregados aqui -->
+                        </div>
+                    </div>
+
+                    <!-- Lista de fotos para gerenciamento -->
+                    <div class="fotos-lista-admin" id="listaFotosAdmin" style="display: none;">
+                        <h4 class="section-subtitle">Fotos na Biblioteca</h4>
+                        <div id="listaFotosContainer">
+                            <!-- Fotos serão carregadas aqui -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Rodapé -->
+    <footer>
+        <div class="footer-content">
+            <p><i class="fas fa-store"></i> Lojinha do Elias - Pinturas Personalizadas</p>
+            <p><i class="fab fa-whatsapp"></i> WhatsApp: (63) 9273-6902</p>
+            <p><i class="fas fa-map-marker-alt"></i> Atendimento personalizado via WhatsApp</p>
+            <p class="creditos">Feito por Kaique</p>
+        </div>
+    </footer>
+
+    <script>
+        // =============================================
+        // CONFIGURAÇÃO DO FIREBASE (VOCÊ VAI SUBSTITUIR)
+        // =============================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyDyknjw6VDujKZ4YGR-v-UEeA25UeqidSk",
+          authDomain: "lojinha-do-elias.firebaseapp.com",
+          projectId: "lojinha-do-elias",
+          storageBucket: "lojinha-do-elias.firebasestorage.app",
+          messagingSenderId: "540051236920",
+          appId: "1:540051236920:web:d526cc4699166c32ed5ecd",
+          measurementId: "G-S9B1NW5R2H"
+        };
+        
+        // Elementos DOM
+        const navIcon = document.getElementById('navIcon');
+        const navMenu = document.getElementById('navMenu');
+        const produtosLista = document.getElementById('produtosLista');
+        const galeriaFotos = document.getElementById('galeriaFotos');
+        const adminContainer = document.getElementById('adminContainer');
+        const adminLogin = document.getElementById('adminLogin');
+        const adminArea = document.getElementById('adminArea');
+        const loginForm = document.getElementById('loginForm');
+        const btnAdicionarProduto = document.getElementById('btnAdicionarProduto');
+        const btnAdicionarFoto = document.getElementById('btnAdicionarFoto');
+        const btnGerenciarProdutos = document.getElementById('btnGerenciarProdutos');
+        const btnGerenciarFotos = document.getElementById('btnGerenciarFotos');
+        const btnSairAdmin = document.getElementById('btnSairAdmin');
+        const formAdicionarProduto = document.getElementById('formAdicionarProduto');
+        const formAdicionarFoto = document.getElementById('formAdicionarFoto');
+        const formProduto = document.getElementById('formProduto');
+        const formFotoBiblioteca = document.getElementById('formFotoBiblioteca');
+        const formPersonalizada = document.getElementById('formPersonalizada');
+        const listaProdutosAdmin = document.getElementById('listaProdutosAdmin');
+        const listaFotosAdmin = document.getElementById('listaFotosAdmin');
+        const listaProdutosContainer = document.getElementById('listaProdutosContainer');
+        const listaFotosContainer = document.getElementById('listaFotosContainer');
+        const fotosPreview = document.getElementById('fotosPreview');
+        const btnAdicionarFotos = document.getElementById('btnAdicionarFotos');
+        const fotosProdutoInput = document.getElementById('fotosProduto');
+        const firebaseStatus = document.getElementById('firebaseStatus');
+        
+        // Variáveis Firebase
+        let db;
+        let produtosRef;
+        let fotosBibliotecaRef;
+        let unsubscribeProdutos;
+        let unsubscribeFotos;
+        
+        // Variáveis para armazenar fotos temporárias
+        let fotosTempProduto = [];
+        
+        // WhatsApp número
+        const whatsappNumber = "556392736902";
+        
+        // =============================================
+        // INICIALIZAÇÃO DO FIREBASE
+        // =============================================
+        function inicializarFirebase() {
+            try {
+                // Inicializar Firebase
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                
+                // Configurar referências
+                produtosRef = db.collection("produtos");
+                fotosBibliotecaRef = db.collection("fotosBiblioteca");
+                
+                // Configurar listeners em tempo real
+                configurarListeners();
+                
+                atualizarStatusFirebase('online', 'Conectado ao Firebase');
+                
+                console.log('Firebase inicializado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao inicializar Firebase:', error);
+                atualizarStatusFirebase('offline', 'Erro no Firebase');
+                // Usar dados locais como fallback
+                carregarDadosLocais();
+            }
+        }
+        
+        // =============================================
+        // LISTENERS EM TEMPO REAL
+        // =============================================
+        function configurarListeners() {
+            // Listener para produtos (em tempo real)
+            unsubscribeProdutos = produtosRef.onSnapshot((snapshot) => {
+                const produtos = [];
+                snapshot.forEach((doc) => {
+                    produtos.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                // Ordenar por data (mais recente primeiro)
+                produtos.sort((a, b) => b.dataCriacao - a.dataCriacao);
+                
+                // Atualizar interface
+                carregarProdutos(produtos);
+                
+                // Se estiver na área admin, atualizar lista
+                if (listaProdutosAdmin.style.display === 'block') {
+                    carregarListaProdutosAdmin(produtos);
+                }
+            }, (error) => {
+                console.error('Erro no listener de produtos:', error);
+                atualizarStatusFirebase('offline', 'Erro na conexão');
+            });
+            
+            // Listener para fotos da biblioteca (em tempo real)
+            unsubscribeFotos = fotosBibliotecaRef.onSnapshot((snapshot) => {
+                const fotos = [];
+                snapshot.forEach((doc) => {
+                    fotos.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                // Atualizar interface
+                carregarFotosBiblioteca(fotos);
+                
+                // Se estiver na área admin, atualizar lista
+                if (listaFotosAdmin.style.display === 'block') {
+                    carregarListaFotosAdmin(fotos);
+                }
+            }, (error) => {
+                console.error('Erro no listener de fotos:', error);
+                atualizarStatusFirebase('offline', 'Erro na conexão');
+            });
+        }
+        
+        // =============================================
+        // FUNÇÕES DO FIREBASE
+        // =============================================
+        async function adicionarProdutoFirebase(titulo, descricao, preco, fotosArray) {
+            try {
+                const novoProduto = {
+                    titulo: titulo,
+                    descricao: descricao,
+                    preco: preco,
+                    fotos: fotosArray,
+                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp(),
+                    ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await produtosRef.add(novoProduto);
+                return true;
+            } catch (error) {
+                console.error('Erro ao adicionar produto:', error);
+                return false;
+            }
+        }
+        
+        async function adicionarFotoBibliotecaFirebase(fotoURL, descricao = '') {
+            try {
+                const novaFoto = {
+                    url: fotoURL,
+                    descricao: descricao,
+                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await fotosBibliotecaRef.add(novaFoto);
+                return true;
+            } catch (error) {
+                console.error('Erro ao adicionar foto:', error);
+                return false;
+            }
+        }
+        
+        async function excluirProdutoFirebase(id) {
+            try {
+                await produtosRef.doc(id).delete();
+                return true;
+            } catch (error) {
+                console.error('Erro ao excluir produto:', error);
+                return false;
+            }
+        }
+        
+        async function excluirFotoBibliotecaFirebase(id) {
+            try {
+                await fotosBibliotecaRef.doc(id).delete();
+                return true;
+            } catch (error) {
+                console.error('Erro ao excluir foto:', error);
+                return false;
+            }
+        }
+        
+        // =============================================
+        // FUNÇÕES DA INTERFACE
+        // =============================================
+        function atualizarStatusFirebase(tipo, mensagem) {
+            const icon = tipo === 'online' ? 'fa-sync fa-spin' : 'fa-exclamation-triangle';
+            firebaseStatus.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${mensagem}</span>
+            `;
+            
+            firebaseStatus.className = `firebase-status status-${tipo}`;
+        }
+        
+        function atualizarPreviewFotos() {
+            fotosPreview.innerHTML = '';
+            
+            if (fotosTempProduto.length === 0) {
+                fotosPreview.innerHTML = '<p style="color: var(--cinza); font-size: 0.9rem;">Nenhuma foto adicionada</p>';
+                return;
+            }
+            
+            fotosTempProduto.forEach((foto, index) => {
+                const fotoItem = document.createElement('div');
+                fotoItem.className = 'foto-preview-item';
+                
+                fotoItem.innerHTML = `
+                    <img src="${foto}" alt="Foto ${index + 1}">
+                    <button type="button" class="remover-foto" onclick="removerFotoTemp(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                fotosPreview.appendChild(fotoItem);
+            });
+        }
+        
+        window.removerFotoTemp = function(index) {
+            if (confirm('Remover esta foto?')) {
+                fotosTempProduto.splice(index, 1);
+                atualizarPreviewFotos();
+            }
+        };
+        
+        function carregarProdutos(produtos) {
+            produtosLista.innerHTML = '';
+            
+            if (produtos.length === 0) {
+                produtosLista.innerHTML = '<p style="text-align: center; color: var(--cinza); padding: 2rem;">Nenhum produto cadastrado ainda.</p>';
+                return;
+            }
+            
+            produtos.forEach(produto => {
+                const produtoCard = document.createElement('div');
+                produtoCard.className = 'produto-card';
+                
+                // Gerar miniaturas
+                let miniaturasHTML = '';
+                const fotos = produto.fotos || [];
+                fotos.forEach((foto, index) => {
+                    miniaturasHTML += `
+                        <div class="produto-miniatura ${index === 0 ? 'ativa' : ''}" 
+                             data-foto-index="${index}"
+                             onclick="trocarFotoProduto('${produto.id}', ${index}, this)">
+                            <img src="${foto}" alt="Miniatura ${index + 1}">
+                        </div>
+                    `;
+                });
+                
+                produtoCard.innerHTML = `
+                    <div class="produto-galeria">
+                        <img src="${fotos[0] || 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80'}" 
+                             alt="${produto.titulo}" class="produto-img-principal" id="fotoPrincipal-${produto.id}">
+                        <div class="produto-miniaturas">
+                            ${miniaturasHTML}
+                        </div>
+                        <div class="contador-fotos">
+                            <i class="fas fa-camera"></i> ${fotos.length}
+                        </div>
+                    </div>
+                    <div class="produto-info">
+                        <h3 class="produto-titulo">${produto.titulo}</h3>
+                        <p class="produto-desc">${produto.descricao}</p>
+                        <p class="produto-preco">${parseFloat(produto.preco).toFixed(2)}</p>
+                        <a href="https://wa.me/${whatsappNumber}?text=Olá! Gostaria de comprar: ${produto.titulo} - R$ ${parseFloat(produto.preco).toFixed(2)}. Por favor, informe o valor da entrega." 
+                           target="_blank" class="btn-comprar btn-whatsapp">
+                            <i class="fab fa-whatsapp"></i> Comprar pelo WhatsApp
+                        </a>
+                    </div>
+                `;
+                
+                produtosLista.appendChild(produtoCard);
+            });
+        }
+        
+        window.trocarFotoProduto = function(produtoId, fotoIndex, elemento) {
+            const fotoPrincipal = document.getElementById(`fotoPrincipal-${produtoId}`);
+            const produtoCard = elemento.closest('.produto-card');
+            const miniaturas = produtoCard.querySelectorAll('.produto-miniatura img');
+            
+            if (miniaturas[fotoIndex]) {
+                fotoPrincipal.src = miniaturas[fotoIndex].src;
+                
+                // Atualizar estado ativo das miniaturas
+                const todasMiniaturas = elemento.parentElement.querySelectorAll('.produto-miniatura');
+                todasMiniaturas.forEach(miniatura => {
+                    miniatura.classList.remove('ativa');
+                });
+                elemento.classList.add('ativa');
+            }
+        };
+        
+        function carregarFotosBiblioteca(fotos) {
+            galeriaFotos.innerHTML = '';
+            
+            if (fotos.length === 0) {
+                galeriaFotos.innerHTML = '<p style="text-align: center; color: var(--cinza); padding: 2rem;">Nenhuma foto na biblioteca ainda.</p>';
+                return;
+            }
+            
+            fotos.forEach(foto => {
+                const fotoItem = document.createElement('div');
+                fotoItem.className = 'foto-item';
+                fotoItem.innerHTML = `<img src="${foto.url}" alt="${foto.descricao || 'Foto da galeria'}">`;
+                galeriaFotos.appendChild(fotoItem);
+            });
+        }
+        
+        function carregarListaProdutosAdmin(produtos) {
+            listaProdutosContainer.innerHTML = '';
+            
+            if (produtos.length === 0) {
+                listaProdutosContainer.innerHTML = '<p style="color: var(--cinza); text-align: center;">Nenhum produto cadastrado.</p>';
+                return;
+            }
+            
+            produtos.forEach(produto => {
+                const produtoItem = document.createElement('div');
+                produtoItem.className = 'produto-admin-item';
+                produtoItem.setAttribute('data-id', produto.id);
+                
+                produtoItem.innerHTML = `
+                    <div class="produto-admin-info">
+                        <div class="produto-admin-titulo">${produto.titulo}</div>
+                        <div class="produto-admin-preco">R$ ${parseFloat(produto.preco).toFixed(2)}</div>
+                        <div class="produto-admin-fotos">
+                            <i class="fas fa-camera"></i> ${(produto.fotos || []).length} foto(s)
+                        </div>
+                        <div style="font-size: 0.9rem; color: var(--cinza); margin-top: 0.3rem;">${(produto.descricao || '').substring(0, 80)}...</div>
+                    </div>
+                    <div class="produto-admin-acoes">
+                        <button class="admin-btn btn-excluir" onclick="excluirProduto('${produto.id}')">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                `;
+                
+                listaProdutosContainer.appendChild(produtoItem);
+            });
+        }
+        
+        window.excluirProduto = async function(id) {
+            if (confirm('Tem certeza que deseja excluir este produto?')) {
+                const sucesso = await excluirProdutoFirebase(id);
+                if (sucesso) {
+                    alert('Produto excluído com sucesso!');
+                } else {
+                    alert('Erro ao excluir produto. Tente novamente.');
+                }
+            }
+        };
+        
+        function carregarListaFotosAdmin(fotos) {
+            listaFotosContainer.innerHTML = '';
+            
+            if (fotos.length === 0) {
+                listaFotosContainer.innerHTML = '<p style="color: var(--cinza); text-align: center;">Nenhuma foto na biblioteca.</p>';
+                return;
+            }
+            
+            fotos.forEach(foto => {
+                const fotoItem = document.createElement('div');
+                fotoItem.className = 'foto-admin-item';
+                fotoItem.innerHTML = `
+                    <img src="${foto.url}" alt="${foto.descricao || 'Foto'}">
+                    <button class="foto-admin-excluir" onclick="excluirFoto('${foto.id}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                listaFotosContainer.appendChild(fotoItem);
+            });
+        }
+        
+        window.excluirFoto = async function(id) {
+            if (confirm('Tem certeza que deseja excluir esta foto da biblioteca?')) {
+                const sucesso = await excluirFotoBibliotecaFirebase(id);
+                if (sucesso) {
+                    alert('Foto excluída com sucesso!');
+                } else {
+                    alert('Erro ao excluir foto. Tente novamente.');
+                }
+            }
+        };
+        
+        // =============================================
+        // DADOS LOCAIS (FALLBACK)
+        // =============================================
+        function carregarDadosLocais() {
+            // Esta função só será usada se o Firebase falhar
+            const produtosSalvos = localStorage.getItem('lojinha_produtos_backup');
+            const fotosSalvas = localStorage.getItem('lojinha_fotos_backup');
+            
+            if (produtosSalvos) {
+                try {
+                    const produtos = JSON.parse(produtosSalvos);
+                    carregarProdutos(produtos);
+                } catch (e) {
+                    console.error('Erro ao carregar dados locais:', e);
+                }
+            }
+            
+            if (fotosSalvas) {
+                try {
+                    const fotos = JSON.parse(fotosSalvas);
+                    carregarFotosBiblioteca(fotos);
+                } catch (e) {
+                    console.error('Erro ao carregar dados locais:', e);
+                }
+            }
+        }
+        
+        // =============================================
+        // INICIALIZAÇÃO DA PÁGINA
+        // =============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostrar área administrativa
+            adminContainer.style.display = 'block';
+            
+            // Inicializar Firebase
+            inicializarFirebase();
+            
+            // Configurar menu responsivo
+            navIcon.addEventListener('click', function() {
+                navMenu.classList.toggle('active');
+            });
+            
+            // Configurar login administrativo
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const usuario = document.getElementById('usuario').value;
+                const senha = document.getElementById('senha').value;
+                
+                if (usuario === "Elis@21" && senha === "elias2176#") {
+                    adminLogin.style.display = 'none';
+                    adminArea.style.display = 'block';
+                    alert('Login realizado com sucesso!');
+                } else {
+                    alert('Usuário ou senha incorretos!');
+                }
+            });
+            
+            // Configurar botões da área administrativa
+            btnAdicionarProduto.addEventListener('click', function() {
+                formAdicionarProduto.style.display = 'block';
+                formAdicionarFoto.style.display = 'none';
+                listaProdutosAdmin.style.display = 'none';
+                listaFotosAdmin.style.display = 'none';
+                // Limpar fotos temporárias
+                fotosTempProduto = [];
+                atualizarPreviewFotos();
+            });
+            
+            btnAdicionarFoto.addEventListener('click', function() {
+                formAdicionarProduto.style.display = 'none';
+                formAdicionarFoto.style.display = 'block';
+                listaProdutosAdmin.style.display = 'none';
+                listaFotosAdmin.style.display = 'none';
+            });
+            
+            btnGerenciarProdutos.addEventListener('click', function() {
+                formAdicionarProduto.style.display = 'none';
+                formAdicionarFoto.style.display = 'none';
+                listaProdutosAdmin.style.display = 'block';
+                listaFotosAdmin.style.display = 'none';
+            });
+            
+            btnGerenciarFotos.addEventListener('click', function() {
+                formAdicionarProduto.style.display = 'none';
+                formAdicionarFoto.style.display = 'none';
+                listaProdutosAdmin.style.display = 'none';
+                listaFotosAdmin.style.display = 'block';
+            });
+            
+            btnSairAdmin.addEventListener('click', function() {
+                adminLogin.style.display = 'block';
+                adminArea.style.display = 'none';
+                formAdicionarProduto.style.display = 'none';
+                formAdicionarFoto.style.display = 'none';
+                listaProdutosAdmin.style.display = 'none';
+                listaFotosAdmin.style.display = 'none';
+                loginForm.reset();
+            });
+            
+            // Configurar upload de múltiplas fotos
+            btnAdicionarFotos.addEventListener('click', function() {
+                fotosProdutoInput.click();
+            });
+            
+            fotosProdutoInput.addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        fotosTempProduto.push(e.target.result);
+                        atualizarPreviewFotos();
+                    };
+                    reader.readAsDataURL(file);
+                });
+                
+                // Limpar input para permitir selecionar as mesmas imagens novamente
+                fotosProdutoInput.value = '';
+            });
+            
+            // Configurar formulário de adicionar produto
+            formProduto.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const titulo = document.getElementById('produtoTitulo').value;
+                const descricao = document.getElementById('produtoDescricao').value;
+                const preco = parseFloat(document.getElementById('produtoPreco').value);
+                
+                // Verificar se há fotos
+                if (fotosTempProduto.length === 0) {
+                    alert('Por favor, adicione pelo menos uma foto do produto.');
+                    return;
+                }
+                
+                // Adicionar produto no Firebase
+                const sucesso = await adicionarProdutoFirebase(titulo, descricao, preco, fotosTempProduto);
+                
+                if (sucesso) {
+                    alert(`Produto "${titulo}" adicionado com sucesso! ${fotosTempProduto.length} foto(s) incluída(s).`);
+                    
+                    // Limpar formulário
+                    formProduto.reset();
+                    fotosTempProduto = [];
+                    atualizarPreviewFotos();
+                    formAdicionarProduto.style.display = 'none';
+                } else {
+                    alert('Erro ao salvar produto. Tente novamente.');
+                }
+            });
+            
+            // Configurar formulário de adicionar foto na biblioteca
+            formFotoBiblioteca.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const fotoInput = document.getElementById('fotoBiblioteca');
+                
+                if (fotoInput.files && fotoInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        const sucesso = await adicionarFotoBibliotecaFirebase(e.target.result);
+                        
+                        if (sucesso) {
+                            alert('Foto adicionada à biblioteca com sucesso!');
+                            formFotoBiblioteca.reset();
+                            formAdicionarFoto.style.display = 'none';
+                        } else {
+                            alert('Erro ao adicionar foto. Tente novamente.');
+                        }
+                    };
+                    reader.readAsDataURL(fotoInput.files[0]);
+                }
+            });
+            
+            // Configurar formulário de pintura personalizada
+            formPersonalizada.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const nome = document.getElementById('nome').value;
+                const descricao = document.getElementById('descricao').value;
+                const fotoInput = document.getElementById('foto');
+                
+                let mensagem = `Olá! Gostaria de solicitar uma pintura personalizada.%0A%0A`;
+                mensagem += `*Nome:* ${nome}%0A`;
+                mensagem += `*Descrição da pintura:*%0A${descricao}%0A%0A`;
+                mensagem += `Por favor, entre em contato para discutirmos os detalhes e o valor da entrega!`;
+                
+                // Abrir WhatsApp com a mensagem
+                window.open(`https://wa.me/${whatsappNumber}?text=${mensagem}`, '_blank');
+                
+                // Limpar formulário
+                formPersonalizada.reset();
+                alert('Solicitação enviada para o WhatsApp! Em breve entraremos em contato.');
+            });
+        });
+    </script>
+</body>
+</html>
